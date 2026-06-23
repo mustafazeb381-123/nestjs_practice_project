@@ -1,0 +1,10 @@
+import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+@Injectable()
+export class EvService {
+    constructor(private readonly configService: ConfigService) { }
+
+    getDbUrl() {
+        return this.configService.get<string>('MONGOOSE_URI');
+    }
+}
