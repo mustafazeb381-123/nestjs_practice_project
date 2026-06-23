@@ -1,65 +1,52 @@
+import { StudentModule } from './student.module';
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Student, StudentDocument } from './student.schema';
+import { Model } from 'mongoose';
 
 @Injectable()
 export class StudentService {
+    constructor(
+        @InjectModel(Student.name)
+        private studentModule: Model<StudentDocument>
+    ) { }
 
-    private students = [
-        { id: 1, name: 'Mustafa', age: 26, email: 'student1@example.com' },
-        { id: 2, name: 'Ali', age: 27, email: 'student2@example.com' },
-        { id: 3, name: 'Ahmed', age: 28, email: 'student3@example.com' },
-        { id: 4, name: 'Omar', age: 29, email: 'student4@example.com' },
-    ];
+    async createStudent(data: Partial<Student>): Promise<Student> {
+        const newStudent = new this.studentModule(data);
+        return newStudent.save();
+    }
 
-    getAllStudents() {
-        return this.students;
+    async getAllStudents(): Promise<Student[]> {
+        return this.studentModule.find().exec();
+    }
+
+    async getStudentById(id: string): Promise<Student | null> {
+        return this.studentModule.findById(id).exec();
 
     }
 
-    getStudentById(id: number) {
-        const student = this.students.find((item) => item.id == id);
-        if (!student) {
-            throw new NotFoundException('Student not found');
-        }
-        return student;
-    }
-    // post 
-    createStudent(data: { name: string, age: number, email: string }) {
-        const newStudent = {
-            id: this.students.length + 1,
-            ...data,
-        }
-        this.students.push(newStudent);
-        return newStudent;
-    }
-    // put 
-    updateStudent(id: number, data: { name: string, age: number, email: string }) {
-        const index = this.students.findIndex((item) => item.id == id);
-        if (index === -1) {
-            throw new NotFoundException('Student not found!');
-        }
-        this.students[index] = {
-            id,
-            ...data,
-        };
-        return this.students[index];
-    }
-    // patch
-    patchStudent(id: number, data: Partial<{ name: string, age: number, email: string }>) {
-        const student = this.getStudentById(id);
-        Object.assign(student, data);
-        return student;
+    //put request 
+
+    async updateStudent(id: string, data: Partial<Student>): Promise<Student | null> {
+        return this.studentModule.findByIdAndUpdate(id, {
+            name: data.name ?? null,
+            email: data.email ?? null,
+            age: data.age ?? null,
+        }, { overwrite: true, returnDocument: 'after' }).exec();
     }
 
-    // delete
-    deleteStudent(id: number) {
-        const index = this.students.findIndex((item) => item.id == id);
-        if (index === -1) {
-            throw new NotFoundException('Student not found!');
-        }
-
-        const deletedStudent = this.students.splice(index, 1);
-        return { message: 'Student deleted successfully', student: deletedStudent[0] };
+    async patchStudent(id: string, data: Partial<Student>): Promise<Student | null> {
+        return this.studentModule.findByIdAndUpdate(id, data, { returnDocument: 'after' }).exec();
     }
+
+    async deleteStudent(id: string): Promise<Student | null> {
+        return this.studentModule.findByIdAndDelete(id).exec();
+
+    }
+
+
+
+
 
 
 
