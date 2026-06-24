@@ -1,17 +1,33 @@
 import { Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Employee } from './schema/employee.schema';
+import { Model } from 'mongoose';
+import { Profile } from './schema/profile.schema';
 
 @Injectable()
 export class EmployeeService {
-    private employees = [
-        { id: 1, name: 'Employee 1', age: 20, email: 'employee1@example.com' },
-        { id: 2, name: 'Employee 2', age: 21, email: 'employee2@example.com' },
-        { id: 3, name: 'Employee 3', age: 22, email: 'employee3@example.com' },
-    ];
-    getEmployees() {
-        return this.employees;
+    constructor(@InjectModel(Employee.name) private employeeModel: Model<Employee>,
+        @InjectModel(Profile.name) private profileModel: Model<Profile>,
+
+    ) { }
+
+    async createEmployee(): Promise<Employee> {
+        const profile = await new this.profileModel({
+            name: 'John Doe',
+            age: 30,
+        }).save();
+        const employee = await new this.employeeModel({
+            name: 'John Doe',
+            profile: profile._id,
+        });
+        return employee.save();
+
     }
-    getEmployeesById(id: number) {
-        return this.employees.find((employee) => employee.id === id); //this is a function to find the employee by id
+    async getAllEmployees(): Promise<Employee[]> {
+        return this.employeeModel.find().populate('profile').exec();
     }
+
+
+
 
 }
